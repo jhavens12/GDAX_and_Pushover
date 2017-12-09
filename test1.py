@@ -7,6 +7,8 @@ from datetime import datetime
 from time import sleep
 
 
+alert_variables = [15000,14000,13000,12000,11000,10000,9000]
+
 # set variables
 over_var = "20000"
 under_var = "15000"
@@ -32,7 +34,7 @@ while True:
     i = i+1
     if i == 12: #every 120 cycles - reset alert variables (30 second variables means every 1 hour)
         i = 0
-        send_under_alert = True #reset alert to repeat
+#        send_under_alert = True #reset alert to repeat
 
     time = datetime.now()
     #stamp = str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M %p'))
@@ -50,10 +52,10 @@ while True:
     #sets alert settings and sends when necessary
     if current_price < under_var:
         print("price is under "+str(under_var))
-        if i == 0: #if under alert is true
-            if cycle_reset:
+        if send_under_alert: #if under alert is true
+            if i == 0:
                 message = "UNDER! REPEAT"
-            if not cycle_reset:
+            else:
                 message = "UNDER!"
             client.send_message(current_price_USD, title=message)
             send_under_alert = False #turn off alert
