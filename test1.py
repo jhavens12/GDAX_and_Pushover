@@ -7,7 +7,7 @@ from datetime import datetime
 from time import sleep
 
 
-alert_variables = {1: {'price': '16000', 'alert': True}, 2:{'price': '15000', 'alert': True}, 3: {'price': '14000', 'alert': True}, 4:{'price': '13000', 'alert': True}}
+alert_variables = {1: {'price': '14000', 'alert': True}, 2:{'price': '15000', 'alert': True}, 3: {'price': '16000', 'alert': True}, 4:{'price': '17000', 'alert': True}}
 
 print (alert_variables[1]['price'])
 # set variables
@@ -40,7 +40,7 @@ def alerts(i,current_price,under_var,alert_state):
             alert_state = False #turn off alert
         if not alert_state: #if set to false (already under)
             if i == 0: #but the loop restarts
-                message = "UNDER! REPEAT" #send a repeat alert
+                message = "UNDER "+under_var+" REPEAT" #send a repeat alert
                 client.send_message(current_price_USD, title=message)
 
     if current_price > under_var:
@@ -71,12 +71,18 @@ while True:
 
     #sets alert settings and sends when necessary
     for var in alert_variables:
+        #compare variables to find if lower/higher than others
+        #adjust other variables alerts based on this
         alert_variables[var]['alert'] = alerts(i,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
+        if alert_variables[var]['alert'] == False:
+            for var2 in alert_variables: #for other prices in the list
+                if alert_variables[var]['price'] < alert_variables[var2]['price']: #if current price is higher than second price
+                    alert_variables[var2]['alert'] = False #set alert to false as well
 
     print("CURRENT: "+current_price_USD)
     print("LOW: "+low_price+" At: "+time_format(low_price_time))
     print("HIGH: "+high_price+ "At: "+time_format(high_price_time))
 
-    print(i)
+    print(alert_variables)
     print()
     sleep(5)
