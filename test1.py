@@ -7,17 +7,17 @@ from datetime import datetime
 from time import sleep
 
 
-alert_variables = [15000,14000,13000,12000,11000,10000,9000]
 
 # set variables
 over_var = "20000"
-under_var = "15000"
+under_var_1 = "15000"
+under_var_2 = "10000"
 
 # set initial time
 time = datetime.now()
 high_price_time = time
 low_price_time = time
-send_under_alert = True
+send_under_alert_1 = True
 i = 1
 
 #get information
@@ -50,21 +50,24 @@ while True:
         low_price_time = time
 
     #sets alert settings and sends when necessary
-    if current_price < under_var:
-        print("price is under "+str(under_var))
-        if send_under_alert: #if under alert is true
+    #under_var_1
+    if current_price < under_var_1:
+        print("price is under "+str(under_var_1))
+        if send_under_alert_1: #if under alert is true
             if i == 0:
                 message = "UNDER! REPEAT"
             else:
                 message = "UNDER!"
             client.send_message(current_price_USD, title=message)
-            send_under_alert = False #turn off alert
+            send_under_alert_1 = False #turn off alert
 
-    if current_price > under_var:
-        print("price is over "+str(under_var))
-        if not send_under_alert: #if false from being under 15000
-            client-send_message(current_price_USD, title="Gone Over")
-            send_under_alert = True #sets the alert to happen if it goes under the val
+    if current_price > under_var_1:
+        print("price is over "+str(under_var_1))
+        if not send_under_alert_1: #if false from being under 15000
+            client.send_message(current_price_USD, title="Gone Over")
+            send_under_alert_1 = True #sets the alert to happen if it goes under the val
+
+    ###
 
     print("CURRENT: "+current_price_USD)
     print("LOW: "+low_price+" At: "+time_format(low_price_time))
