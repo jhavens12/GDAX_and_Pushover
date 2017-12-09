@@ -7,8 +7,9 @@ from datetime import datetime
 from time import sleep
 
 
-alert_variables = ["16000","15000","14000","13000","12000","11000","10000","9000"]
+alert_variables = {1: {'price': '16000', 'alert': True}, 2:{'price': '15000', 'alert': True}, 3: {'price': '14000', 'alert': True}, 4:{'price': '13000', 'alert': True}}
 
+print (alert_variables[1]['price'])
 # set variables
 over_var = "20000"
 under_var = "15000"
@@ -17,7 +18,7 @@ under_var = "15000"
 time = datetime.now()
 high_price_time = time
 low_price_time = time
-send_under_alert = True
+alert_state = True
 i = 1
 
 #get information
@@ -30,11 +31,30 @@ high_price = low_price
 def time_format(time):
     return str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M:%S %p'))
 
+def alerts(i,current_price,under_var,alert_state):
+    if current_price < under_var:
+        print("price is under "+str(under_var))
+        if alert_state: #if under alert is true
+            message = "UNDER " +str(under_var)
+            client.send_message(current_price_USD, title=message)
+            alert_state = False #turn off alert
+        if not alert_state: #if set to false (already under)
+            if i == 0: #but the loop restarts
+                message = "UNDER! REPEAT" #send a repeat alert
+                client.send_message(current_price_USD, title=message)
+
+    if current_price > under_var:
+        print("price is over "+str(under_var))
+        if not alert_state: #if false from being under 15000
+            message = "Gone Over "+under_var
+            client.send_message(current_price_USD, title=message)
+            alert_state = True #sets the alert to happen if it goes under the val
+    return alert_state
+
 while True:
     i = i+1
     if i == 12: #every 120 cycles - reset alert variables (30 second variables means every 1 hour)
         i = 0
-#        send_under_alert = True #reset alert to repeat
 
     time = datetime.now()
     #stamp = str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M %p'))
@@ -49,29 +69,14 @@ while True:
         low_price = current_price
         low_price_time = time
 
-    for under_var in alert_variables:
-        sleep(1)
-        #sets alert settings and sends when necessary
-        if current_price < under_var:
-            print("price is under "+str(under_var))
-            if send_under_alert: #if under alert is true
-                if i == 0:
-                    message = "UNDER! REPEAT"
-                else:
-                    message = "UNDER " +str(under_var)
-                client.send_message(current_price_USD, title=message)
-                send_under_alert = False #turn off alert
-
-        if current_price > under_var:
-            print("price is over "+str(under_var))
-            if not send_under_alert: #if false from being under 15000
-                message = "Gone Over "+under_var
-                client.send_message(current_price_USD, title=message)
-                send_under_alert = True #sets the alert to happen if it goes under the val
+    #sets alert settings and sends when necessary
+    for var in alert_variables:
+        alert_variables[var]['alert'] = alerts(i,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
 
     print("CURRENT: "+current_price_USD)
     print("LOW: "+low_price+" At: "+time_format(low_price_time))
     print("HIGH: "+high_price+ "At: "+time_format(high_price_time))
 
     print(i)
+    print()
     sleep(5)
