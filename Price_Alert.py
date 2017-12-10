@@ -6,9 +6,7 @@ import credentials
 from datetime import datetime
 from time import sleep
 
-#alert for lowest in x time period (week,day,month)
-#input list, create function - easy
-
+#create variables and step points
 numbers = list(range(1000,25000,1000))
 
 alert_variables = {}
@@ -17,10 +15,6 @@ for n,y in enumerate(numbers):
     alert_variables[c] = {}
     alert_variables[c]['price'] = y
     alert_variables[c]['alert'] = True
-
-#pprint(alert_variables)
-
-#alert_variables = {1: {'price': '14000', 'alert': True}, 2:{'price': '15000', 'alert': True}, 3: {'price': '16000', 'alert': True}, 4:{'price': '17000', 'alert': True}}
 
 # set initial time
 time = datetime.now()
@@ -33,11 +27,19 @@ i = 1
 client = Client(credentials.push_user, api_token=credentials.push_token)
 public_client = gdax.PublicClient()
 
+#set initial pricing
 low_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
 high_price = low_price
 
 def time_format(time):
-    return str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M:%S %p'))
+    return str(str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M:%S %p')))
+
+def t_delta(duration):
+    days, seconds = duration.days, duration.seconds
+    hours = days * 24 + seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return str(hours)+":"+str(minutes)+":"+str(seconds)
 
 def money_format(money):
     return str('${:,.2f}'.format(float(money)))
@@ -63,22 +65,31 @@ def alerts(limits,current_price,under_var,alert_state):
 
 while True:
 
-    limits = {}
-    time = datetime.now()
+    limits = {} #create var dictionary
+    time = datetime.now() #get current time
 
-    try:
+
+    try: #get current pricing
         current_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-        current_price_USD = '${:,.2f}'.format(float(current_price))
+        current_price_USD = money_format(current_price)
     except Exception:
         current_price = 0
         current_price_USD = 0
 
-    if current_price > high_price:
+    if current_price > high_price: #if new high_price
         high_price = current_price
+        high_price_time_gap = time - high_price_time #calculate high price time gap since last nigh price
+        print(t_delta(high_price_time_gap))
         high_price_time = time
+        message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(high_price_time_gap)
+        client.send_message(message, title="LOCAL HIGH")
     if current_price < low_price:
         low_price = current_price
+        low_price_time_gap = time - low_price_time
+        print(t_delta(low_price_time_gap))
         low_price_time = time
+        message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(low_price_time_gap)
+        client.send_message(current_price_USD+"\n"+time_format(time), title="LOCAL LOW")
 
     try:
         past_day_data = public_client.get_product_24hr_stats('BTC-USD')
@@ -96,15 +107,12 @@ while True:
     limits['past_day_high'] = money_format(past_day_high)
     limits['past_day_low'] = money_format(past_day_low)
 
-    #sets alert settings and sends when necessary
-    for var in alert_variables:
-        #compare variables to find if lower/higher than others
-        #adjust other variables alerts based on this
+    for var in alert_variables: #sets up alerts, keeps track with dictionary
         alert_variables[var]['alert'] = alerts(limits,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
         if alert_variables[var]['alert'] == False:
             for var2 in alert_variables: #for other prices in the list
                 if alert_variables[var]['price'] < alert_variables[var2]['price']: #if current price is lower than second price
-                    alert_variables[var2]['alert'] = False #set alert to false as well
+                    alert_variables[var2]['alert'] = False #set alert to false as well - do not get under 16,000 and 17,000 if price is 15500
 
     if current_price == past_day_high:
         client.send_message(current_price_USD+"\n"+time_format(time), title="24 HOUR HIGH")
