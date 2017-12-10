@@ -66,8 +66,12 @@ while True:
     limits = {}
     time = datetime.now()
 
-    current_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-    current_price_USD = '${:,.2f}'.format(float(current_price))
+    try:
+        current_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
+        current_price_USD = '${:,.2f}'.format(float(current_price))
+    except Exception:
+        current_price = 0
+        current_price_USD = 0
 
     if current_price > high_price:
         high_price = current_price
@@ -76,9 +80,14 @@ while True:
         low_price = current_price
         low_price_time = time
 
-    past_day_data = public_client.get_product_24hr_stats('BTC-USD')
-    past_day_high = past_day_data['high']
-    past_day_low = past_day_data['low']
+    try:
+        past_day_data = public_client.get_product_24hr_stats('BTC-USD')
+        past_day_high = past_day_data['high']
+        past_day_low = past_day_data['low']
+
+    except Exception:
+        past_day_high = 0
+        past_day_low = 0
 
     limits['high_price'] = money_format(high_price)
     limits['high_price_time'] = time_format(high_price_time)
