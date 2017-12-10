@@ -112,6 +112,7 @@ while True:
         print(t_delta(high_price_time_gap))
         limits['high_price_time'] = time
         message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(high_price_time_gap)
+        print(message)
         client.send_message(message, title="LOCAL HIGH")
     if current_price < limits['low_price']:
         limits['low_price'] = current_price
@@ -119,7 +120,8 @@ while True:
         print(t_delta(low_price_time_gap))
         limits['low_price_time'] = time
         message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(low_price_time_gap)
-        client.send_message(current_price_USD+"\n"+time_format(time), title="LOCAL LOW")
+        print(message)
+        client.send_message(message, title="LOCAL LOW")
 
     try:
         past_day_data = public_client.get_product_24hr_stats('BTC-USD')
