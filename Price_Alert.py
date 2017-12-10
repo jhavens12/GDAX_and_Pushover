@@ -5,6 +5,10 @@ from pushover import Client
 import credentials
 from datetime import datetime
 from time import sleep
+import pickle
+from pathlib import Path
+
+
 
 #create variables and step points
 numbers = list(range(1000,25000,1000))
@@ -16,20 +20,45 @@ for n,y in enumerate(numbers):
     alert_variables[c]['price'] = y
     alert_variables[c]['alert'] = True
 
-# set initial time
-time = datetime.now()
-high_price_time = time
-low_price_time = time
-alert_state = True
-i = 1
-
-#get information
+#sets external information
 client = Client(credentials.push_user, api_token=credentials.push_token)
 public_client = gdax.PublicClient()
 
+# set initial time
+time = datetime.now()
+alert_state = True
+i = 1
+
+#check to see if file exists, if yes do below, if no create file and dictionary
+limit_file = Path("./historical_pricing.dict")
+if limit_file.is_file():
+#pricing import
+    pickle_in = open("historical_pricing.dict","rb")
+    limits = pickle.load(pickle_in)
+    # if 'high_price_time' not in limits:
+    #     limits['high_price_time'] = time
+    # if 'low_price_time' not in limits:
+    #     limits['low_price_time'] = time
+else:
+    f=open("historical_pricing.dict","w+") #create file
+    f.close()
+    #pickle_in = open("historical_pricing.dict","rb") #open the file
+    limits = {} #create limits dict and variables
+    limits['high_price_time'] = time
+    limits['low_price_time'] = time
+    limits['low_price'] = limits['high_price'] = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
+
+    pickle_out = open("historical_pricing.dict","wb") #open file
+    pickle.dump(limits, pickle_out) #save limits dict to file
+    pickle_out.close()
+
 #set initial pricing
-low_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-high_price = low_price
+# if 'low_price' not in limits:
+#     limits['low_price'] = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
+#low_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
+# if 'high_price' not in limits:
+#     limits['high_price'] = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
+#high_price = low_price
 
 def time_format(time):
     return str(str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M:%S %p')))
@@ -45,9 +74,10 @@ def money_format(money):
     return str('${:,.2f}'.format(float(money)))
 
 def alerts(limits,current_price,under_var,alert_state):
-    tops = "\nHigh: "+limits['high_price']+" @: "+limits['high_price_time']\
-    +"\nLow: "+limits['low_price']+" @: "+limits['low_price_time']\
-    +"\n24 Hour High: "+limits['past_day_high']+"\n24 Hour Low: "+limits['past_day_low']
+    tops = "\nHigh: "+money_format(limits['high_price'])+" @: "+time_format(limits['high_price_time'])\
+    +"\nLow: "+money_format(limits['low_price'])+" @: "+time_format(limits['low_price_time'])\
+    +"\n24 Hour High: "+money_format(limits['past_day_high'])+"\n24 Hour Low: "+money_format(limits['past_day_low'])
+
     if current_price < under_var:
         #print("price is under "+str(under_var))
         if alert_state: #if under alert is true
@@ -65,7 +95,7 @@ def alerts(limits,current_price,under_var,alert_state):
 
 while True:
 
-    limits = {} #create var dictionary
+    #limits = {} #create var dictionary
     time = datetime.now() #get current time
 
 
@@ -76,36 +106,37 @@ while True:
         current_price = 0
         current_price_USD = 0
 
-    if current_price > high_price: #if new high_price
-        high_price = current_price
-        high_price_time_gap = time - high_price_time #calculate high price time gap since last nigh price
+    if current_price > limits['high_price']: #if new high_price
+        limits['high_price'] = current_price
+        high_price_time_gap = time - limits['high_price_time'] #calculate high price time gap since last nigh price
         print(t_delta(high_price_time_gap))
-        high_price_time = time
+        limits['high_price_time'] = time
         message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(high_price_time_gap)
         client.send_message(message, title="LOCAL HIGH")
-    if current_price < low_price:
-        low_price = current_price
-        low_price_time_gap = time - low_price_time
+    if current_price < limits['low_price']:
+        limits['low_price'] = current_price
+        low_price_time_gap = time - limits['low_price_time']
         print(t_delta(low_price_time_gap))
-        low_price_time = time
+        limits['low_price_time'] = time
         message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(low_price_time_gap)
         client.send_message(current_price_USD+"\n"+time_format(time), title="LOCAL LOW")
 
     try:
         past_day_data = public_client.get_product_24hr_stats('BTC-USD')
-        past_day_high = past_day_data['high']
-        past_day_low = past_day_data['low']
+        limits['past_day_high'] = past_day_data['high']
+        limits['past_day_low'] = past_day_data['low']
 
     except Exception:
-        past_day_high = 0
-        past_day_low = 0
+        print("no response for 24 hour values")
+        # limits['past_day_high'] = 0
+        # limits['past_day_low'] = 0
 
-    limits['high_price'] = money_format(high_price)
-    limits['high_price_time'] = time_format(high_price_time)
-    limits['low_price'] = money_format(low_price)
-    limits['low_price_time'] = time_format(low_price_time)
-    limits['past_day_high'] = money_format(past_day_high)
-    limits['past_day_low'] = money_format(past_day_low)
+    # limits['high_price'] = money_format(high_price)
+    # limits['high_price_time'] = time_format(high_price_time)
+    # limits['low_price'] = money_format(low_price)
+    # limits['low_price_time'] = time_format(low_price_time)
+    #limits['past_day_high'] = money_format(past_day_high)
+    #limits['past_day_low'] = money_format(past_day_low)
 
     for var in alert_variables: #sets up alerts, keeps track with dictionary
         alert_variables[var]['alert'] = alerts(limits,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
@@ -114,17 +145,17 @@ while True:
                 if alert_variables[var]['price'] < alert_variables[var2]['price']: #if current price is lower than second price
                     alert_variables[var2]['alert'] = False #set alert to false as well - do not get under 16,000 and 17,000 if price is 15500
 
-    if current_price == past_day_high:
-        client.send_message(current_price_USD+"\n"+time_format(time), title="24 HOUR HIGH")
-    if current_price == past_day_low:
-        client.send_message(current_price_USD+"\n"+time_format(time), title="24 HOUR LOW")
 
     print("CURRENT: "+str(current_price_USD))
-    print("LOW: "+money_format(low_price)+" At: "+time_format(low_price_time))
-    print("HIGH: "+money_format(high_price)+ " At: "+time_format(high_price_time))
+    print("LOW: "+money_format(limits['low_price'])+" At: "+time_format(limits['low_price_time']))
+    print("HIGH: "+money_format(limits['high_price'])+ " At: "+time_format(limits['high_price_time']))
     print()
-    print("24 HOUR LOW: "+money_format(past_day_low))
-    print("24 HOUR HIGH: "+money_format(past_day_high))
+    print("24 HOUR LOW: "+money_format(limits['past_day_low']))
+    print("24 HOUR HIGH: "+money_format(limits['past_day_high']))
 
     print()
+    #save limits dictionary to file for next run of entire script, not this loop
+    pickle_out = open("historical_pricing.dict","wb")
+    pickle.dump(limits, pickle_out)
+    pickle_out.close()
     sleep(60)
