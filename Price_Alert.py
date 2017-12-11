@@ -96,19 +96,27 @@ while True:
 
     # add support for the last high price time/amount in notification?
     if current_price > limits['high_price']: #if new high_price
+        limits['high_price_old'] = limits['high_price']
         limits['high_price'] = current_price
         high_price_time_gap = time - limits['high_price_time'] #calculate high price time gap since last nigh price
         print(t_delta(high_price_time_gap))
+        limits['high_price_time_old'] = limits['high_price_time']
         limits['high_price_time'] = time
-        message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(high_price_time_gap)
+        message = current_price_USD+" @: "+time_format(time)\
+        +"\n"+money_format(limits['high_price_old'])+" @: "+time_format(limits['high_price_time_old']+" (OLD)")\
+        +"\nGap: "+t_delta(high_price_time_gap)
         print(message)
         client.send_message(message, title="LOCAL HIGH")
     if current_price < limits['low_price']:
+        limits['low_price_old'] = limits['low_price']
         limits['low_price'] = current_price
         low_price_time_gap = time - limits['low_price_time']
         print(t_delta(low_price_time_gap))
+        limits['low_price_time_old'] = limits['low_price_time']
         limits['low_price_time'] = time
-        message = current_price_USD+" @: "+time_format(time)+"\nGap: "+t_delta(low_price_time_gap)
+        message = current_price_USD+" @: "+time_format(time)\
+        +"\n"+money_format(limits['low_price_old'])+" @: "+time_format(limits['low_price_time_old']+" (OLD)")\
+        +"\nGap: "+t_delta(low_price_time_gap)
         print(message)
         client.send_message(message, title="LOCAL LOW")
 
