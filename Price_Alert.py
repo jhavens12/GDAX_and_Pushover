@@ -8,10 +8,14 @@ from time import sleep
 import pickle
 from pathlib import Path
 
-
-
 #create variables and step points
-numbers = list(range(1000,25000,1000))
+bottom_alert = 1000 #min number in range
+top_alert = 30000 #max number in range
+step_amount = 1000 #amount to be alerted at
+refresh_rate = 60 #seconds
+
+#######
+numbers = list(range(bottom_alert,top_alert,step_amount))
 
 alert_variables = {}
 for n,y in enumerate(numbers):
@@ -35,14 +39,9 @@ if limit_file.is_file():
 #pricing import
     pickle_in = open("historical_pricing.dict","rb")
     limits = pickle.load(pickle_in)
-    # if 'high_price_time' not in limits:
-    #     limits['high_price_time'] = time
-    # if 'low_price_time' not in limits:
-    #     limits['low_price_time'] = time
 else:
     f=open("historical_pricing.dict","w+") #create file
     f.close()
-    #pickle_in = open("historical_pricing.dict","rb") #open the file
     limits = {} #create limits dict and variables
     limits['high_price_time'] = time
     limits['low_price_time'] = time
@@ -51,14 +50,6 @@ else:
     pickle_out = open("historical_pricing.dict","wb") #open file
     pickle.dump(limits, pickle_out) #save limits dict to file
     pickle_out.close()
-
-#set initial pricing
-# if 'low_price' not in limits:
-#     limits['low_price'] = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-#low_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-# if 'high_price' not in limits:
-#     limits['high_price'] = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
-#high_price = low_price
 
 def time_format(time):
     return str(str(time.month) +"/"+ str(time.day)+"/"+ str(time.year)+" "+str(time.time().strftime('%I:%M:%S %p')))
@@ -79,14 +70,12 @@ def alerts(limits,current_price,under_var,alert_state):
     +"\n24 Hour High: "+money_format(limits['past_day_high'])+"\n24 Hour Low: "+money_format(limits['past_day_low'])
 
     if current_price < under_var:
-        #print("price is under "+str(under_var))
         if alert_state: #if under alert is true
             message = "UNDER " +money_format(under_var)
             client.send_message(current_price_USD+tops, title=message)
             alert_state = False #turn off alert
 
     if current_price > under_var:
-        #print("price is over "+str(under_var))
         if not alert_state: #if false from being under 15000
             message = "OVER "+money_format(under_var)
             client.send_message(current_price_USD+tops, title=message)
@@ -95,9 +84,7 @@ def alerts(limits,current_price,under_var,alert_state):
 
 while True:
 
-    #limits = {} #create var dictionary
     time = datetime.now() #get current time
-
 
     try: #get current pricing
         current_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
@@ -130,15 +117,6 @@ while True:
 
     except Exception:
         print("no response for 24 hour values")
-        # limits['past_day_high'] = 0
-        # limits['past_day_low'] = 0
-
-    # limits['high_price'] = money_format(high_price)
-    # limits['high_price_time'] = time_format(high_price_time)
-    # limits['low_price'] = money_format(low_price)
-    # limits['low_price_time'] = time_format(low_price_time)
-    #limits['past_day_high'] = money_format(past_day_high)
-    #limits['past_day_low'] = money_format(past_day_low)
 
     for var in alert_variables: #sets up alerts, keeps track with dictionary
         alert_variables[var]['alert'] = alerts(limits,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
@@ -146,7 +124,6 @@ while True:
             for var2 in alert_variables: #for other prices in the list
                 if alert_variables[var]['price'] < alert_variables[var2]['price']: #if current price is lower than second price
                     alert_variables[var2]['alert'] = False #set alert to false as well - do not get under 16,000 and 17,000 if price is 15500
-
 
     print("CURRENT: "+str(current_price_USD))
     print("LOW: "+money_format(limits['low_price'])+" At: "+time_format(limits['low_price_time']))
@@ -160,4 +137,4 @@ while True:
     pickle_out = open("historical_pricing.dict","wb")
     pickle.dump(limits, pickle_out)
     pickle_out.close()
-    sleep(60)
+    sleep(refresh_rate)
