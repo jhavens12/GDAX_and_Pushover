@@ -3,9 +3,9 @@ testing with gdax api and pushover notification system
 
 # requirements:
 
-pip install gdax
+pip3 install gdax (https://github.com/danpaquin/gdax-python)
 
-pip install python-pushover
+pip3 install python-pushover (https://github.com/Thibauth/python-pushover)
 
 # Price_Alert.py
 
@@ -16,7 +16,7 @@ Uses a credentials.py file which houses a pushover token "push_token" and a push
     push_token = "xxxx"
     push_user = "xxxx"
 
-Monitors the GDAX current price using their api. The script will send a notification every time the price goes over/under the set steps that you set up in the Price_Alert.py file (ex. every 1000 will alert you when the price goes over/under 15,000 16,000 17,000 etc). You can also set the start amount and end amount if you wish so you can monitor specfic price points.
+Monitors the GDAX current price using their api and the gdax python package from danpaquin. The script will send a notification every time the price goes over/under the set steps that you set up in the Price_Alert.py file (ex. every 1000 will alert you when the price goes over/under 15,000 16,000 17,000 etc). You can also set the start amount and end amount if you wish so you can monitor specfic price points.
 
 The following config will alert you every $1,000 starting at $1,000 and going up to $30,000 every 60 seconds.
 
