@@ -102,9 +102,8 @@ while True:
         print(t_delta(high_price_time_gap))
         limits['high_price_time_old'] = limits['high_price_time']
         limits['high_price_time'] = time
-        message = current_price_USD+" @: "+time_format(time)\
-        +"\n"+money_format(limits['high_price_old'])+" @: "+time_format(limits['high_price_time_old']+" (OLD)")\
-        +"\nGap: "+t_delta(high_price_time_gap)
+        message = current_price_USD+" @: "+time_format(time)+"\n"+money_format(limits['high_price_old'])\
+        +" @: "+time_format(limits['high_price_time_old'])+" (OLD)")+"\nGap: "+str(t_delta(high_price_time_gap))
         print(message)
         client.send_message(message, title="LOCAL HIGH")
     if current_price < limits['low_price']:
@@ -114,9 +113,8 @@ while True:
         print(t_delta(low_price_time_gap))
         limits['low_price_time_old'] = limits['low_price_time']
         limits['low_price_time'] = time
-        message = current_price_USD+" @: "+time_format(time)\
-        +"\n"+money_format(limits['low_price_old'])+" @: "+time_format(limits['low_price_time_old']+" (OLD)")\
-        +"\nGap: "+t_delta(low_price_time_gap)
+        message = current_price_USD+" @: "+time_format(time)+"\n"+money_format(limits['low_price_old'])\
+        +" @: "+time_format(limits['low_price_time_old'])+" (OLD)"+"\nGap: "+t_delta(low_price_time_gap)
         print(message)
         client.send_message(message, title="LOCAL LOW")
 
