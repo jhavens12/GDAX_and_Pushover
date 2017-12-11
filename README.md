@@ -1,7 +1,7 @@
 # gdax_testing
-testing with gdax api and pushover notification system
+testing with gdax api and pushover notification system to alert of bitcoin highs and lows without being glued to the gdax website
 
-# requirements:
+# Requirements:
 
 pip3 install gdax (https://github.com/danpaquin/gdax-python)
 
@@ -45,5 +45,5 @@ You can reset the local high and local low data by stopping the script, removing
     
   LOCAL HIGH
     
-    $16,245.00 $: 12/10/2017 09:19:35 PM
+    $16,245.00 @: 12/10/2017 09:19:35 PM
     Gap: 3:13:43
