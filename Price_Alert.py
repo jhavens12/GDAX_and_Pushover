@@ -93,6 +93,8 @@ while True:
         current_price = 0
         current_price_USD = 0
 
+
+    # add support for the last high price time/amount in notification?
     if current_price > limits['high_price']: #if new high_price
         limits['high_price'] = current_price
         high_price_time_gap = time - limits['high_price_time'] #calculate high price time gap since last nigh price
