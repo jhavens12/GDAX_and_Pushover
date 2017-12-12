@@ -12,7 +12,7 @@ from pathlib import Path
 bottom_alert = 1000 #min number in range
 top_alert = 30000 #max number in range
 step_amount = 1000 #amount to be alerted at
-refresh_rate = 6 #seconds
+refresh_rate = 60 #seconds
 
 #######
 numbers = list(range(bottom_alert,top_alert,step_amount))
@@ -90,19 +90,14 @@ while True:
         current_price = float(public_client.get_product_ticker(product_id='BTC-USD')['price'])
         current_price_USD = money_format(current_price)
     except Exception:
-        current_price = 0
-        current_price_USD = 0
+        print ("NO API RESPONSE CURRENT PRICE")
+        print()
 
-
-    # add support for the last high price time/amount in notification?
-    # add price gap as well as money gap, reformat nicely
     if current_price > limits['high_price']: #if new high_price
 
         limits['high_price_old'] = limits['high_price']
         limits['high_price'] = current_price
         limits['high_price_gap'] = limits['high_price'] - limits['high_price_old']
-
-        #high_price_time_gap = time - limits['high_price_time'] #calculate high price time gap since last nigh price
 
         limits['high_price_time_old'] = limits['high_price_time']
         limits['high_price_time'] = time
@@ -117,7 +112,6 @@ while True:
 
         limits['low_price_old'] = limits['low_price']
         limits['low_price'] = current_price
-        #low_price_time_gap = time - limits['low_price_time']
         limits['low_price_gap'] = limits['low_price'] - limits['low_price_old']
 
         limits['low_price_time_old'] = limits['low_price_time']
@@ -136,6 +130,7 @@ while True:
 
     except Exception:
         print("no response for 24 hour values")
+        print()
 
     for var in alert_variables: #sets up alerts, keeps track with dictionary
         alert_variables[var]['alert'] = alerts(limits,current_price,alert_variables[var]['price'],alert_variables[var]['alert'])
@@ -144,15 +139,10 @@ while True:
                 if alert_variables[var]['price'] < alert_variables[var2]['price']: #if current price is lower than second price
                     alert_variables[var2]['alert'] = False #set alert to false as well - do not get under 16,000 and 17,000 if price is 15500
 
-    print("CURRENT: "+str(current_price_USD))
-    print("LOW: "+money_format(limits['low_price'])+" At: "+time_format(limits['low_price_time']))
-    print("HIGH: "+money_format(limits['high_price'])+ " At: "+time_format(limits['high_price_time']))
+    print("CURRENT: "+str(money_format(current_price)))
+    print("TIME: "+time_format(time))
     print()
-    print("24 HOUR LOW: "+money_format(limits['past_day_low']))
-    print("24 HOUR HIGH: "+money_format(limits['past_day_high']))
 
-    print()
-    #save limits dictionary to file for next run of entire script, not this loop
     pickle_out = open("historical_pricing.dict","wb")
     pickle.dump(limits, pickle_out)
     pickle_out.close()
